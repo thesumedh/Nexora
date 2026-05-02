@@ -11,7 +11,7 @@
  */
 
 import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
-import { SigningStargateClient, StargateClient, GasPrice } from '@cosmjs/stargate';
+import { SigningStargateClient, GasPrice } from '@cosmjs/stargate';
 import { sdlToYAML, type JobRequirements } from './sdl-generator';
 
 // ─── Sandbox configuration ───────────────────────────────────────────────────
@@ -67,13 +67,13 @@ export async function getAkashAddress(): Promise<string> {
 
 // ─── Balance check ────────────────────────────────────────────────────────────
 
-export async function getAkashBalance(address: string): Promise<bigint> {
+export async function getAkashBalance(address: string): Promise<number> {
   const url = `${SANDBOX_REST}/cosmos/bank/v1beta1/balances/${address}?denom=${DENOM}`;
   const res = await fetch(url);
-  if (!res.ok) return 0n;
+  if (!res.ok) return 0;
   const data = await res.json();
   const balance = data?.balance?.amount || '0';
-  return BigInt(balance);
+  return Number(balance);
 }
 
 // ─── Deployment via REST API ──────────────────────────────────────────────────
@@ -97,7 +97,7 @@ export async function createSandboxDeployment(
   // Check balance
   const balance = await getAkashBalance(address);
   log(`Balance: ${balance} ${DENOM}`);
-  if (balance < BigInt(MIN_DEPOSIT)) {
+  if (balance < Number(MIN_DEPOSIT)) {
     throw new Error(
       `Insufficient sandbox AKT. Have: ${balance} uakt, Need: ${MIN_DEPOSIT} uakt.\n` +
       `Get free testnet tokens: Join Akash Discord → #sandbox-faucet → type: $request ${address}`
