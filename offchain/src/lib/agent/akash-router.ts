@@ -13,6 +13,7 @@ import {
   Provider
 } from './provider-selection';
 import { fetchAkashProviders, SynapseProvider } from '@/lib/providers/akash-fetcher';
+import { routeViaSandbox } from '@/lib/akash/testnet-client';
 
 export interface RouteRequest {
   jobId: string;
@@ -138,6 +139,30 @@ export async function routeToAkash(
   };
 
   try {
+    // ── Sandbox testnet mode (free, no AKT required beyond faucet) ──────────
+    if (process.env.AKASH_WALLET_MNEMONIC) {
+      log('info', 'Using Akash Sandbox Testnet (free testnet tokens)');
+      const sandboxResult = await routeViaSandbox(request.requirements, (msg) => log('info', msg));
+      if (sandboxResult.success && sandboxResult.deployment) {
+        return {
+          success: true,
+          deployment: {
+            id: sandboxResult.deployment.dseq,
+            owner: sandboxResult.deployment.owner,
+            dseq: sandboxResult.deployment.dseq,
+            status: 'active',
+            createdAt: sandboxResult.deployment.createdAt,
+            sdl: generateSDL(request.requirements),
+            leases: [],
+            manifest: sandboxResult.deployment.manifest,
+          },
+          logs,
+        };
+      }
+      return { success: false, error: sandboxResult.error || 'Sandbox routing failed', logs };
+    }
+
+    // ── Console API mode (mainnet, requires funded wallet) ──────────────────
     // Step 1: Check suitability
     log('info', 'Connecting to provider');
     const suitability = isAkashSuitable(request.requirements);
