@@ -11,7 +11,7 @@
  */
 
 import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
-import { SigningStargateClient, StargateClient, coins } from '@cosmjs/stargate';
+import { SigningStargateClient, StargateClient, GasPrice } from '@cosmjs/stargate';
 import { sdlToYAML, type JobRequirements } from './sdl-generator';
 
 // ─── Sandbox configuration ───────────────────────────────────────────────────
@@ -110,7 +110,7 @@ export async function createSandboxDeployment(
 
   // Connect signing client
   const client = await SigningStargateClient.connectWithSigner(SANDBOX_RPC, wallet, {
-    gasPrice: { denom: DENOM, amount: { value: 0.025n } } as unknown as Parameters<typeof SigningStargateClient.connectWithSigner>[2]['gasPrice']
+    gasPrice: GasPrice.fromString(`0.025${DENOM}`)
   });
 
   // Get account info for sequence
