@@ -62,7 +62,39 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const agentAddress = getAgentAddress();
     console.log('Agent processing payment:', { userAddress, agentAddress, amount: amountBigInt.toString() });
 
-    console.log('Step 1: Checking USDC allowance...');
+    const wallet = createAgentWallet();
+    const account = wallet.account!;
+
+    // Step 1: Auto-mint USDC to user if they don't have enough (testnet faucet)
+    console.log('Step 1: Checking user USDC balance...');
+    const userBalance = await publicClient.readContract({
+      address: USDC_ADDRESS as `0x${string}`,
+      abi: USDC_ABI,
+      functionName: 'balanceOf',
+      args: [userAddress]
+    }) as bigint;
+
+    if (userBalance < amountBigInt) {
+      console.log('Auto-minting testnet USDC to user...');
+      const mintHash = await wallet.writeContract({
+        account,
+        address: USDC_ADDRESS as `0x${string}`,
+        abi: USDC_ABI,
+        functionName: 'mint',
+        args: [userAddress, amountBigInt],
+        chain: adiTestnet,
+        gas: BigInt(200000)
+      });
+      console.log('Mint tx:', mintHash);
+      const mintReceipt = await publicClient.waitForTransactionReceipt({ hash: mintHash });
+      if (mintReceipt.status === 'reverted') {
+        return NextResponse.json({ success: false, error: 'Failed to mint testnet USDC' }, { status: 500 });
+      }
+      console.log('Minted USDC to user successfully');
+    }
+
+    // Step 2: Check allowance (user must have approved agent)
+    console.log('Step 2: Checking USDC allowance...');
     const currentAllowance = await publicClient.readContract({
       address: USDC_ADDRESS as `0x${string}`,
       abi: USDC_ABI,
@@ -72,15 +104,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     if (currentAllowance < amountBigInt) {
       return NextResponse.json(
-        { success: false, error: `Insufficient USDC allowance` },
+        { success: false, error: `Insufficient USDC allowance. Please approve the agent to spend your USDC.` },
         { status: 400 }
       );
     }
 
-    const wallet = createAgentWallet();
-    const account = wallet.account!;
-
-    console.log('Step 2: Transferring USDC from user to agent...');
+    console.log('Step 3: Transferring USDC from user to agent...');
     const transferHash = await wallet.writeContract({
       account,
       address: USDC_ADDRESS as `0x${string}`,

@@ -128,17 +128,6 @@ export function useEscrowPayment(): UseEscrowPaymentReturn {
       console.log('USDC Address:', USDC_ADDRESS);
       console.log('Amount:', amount.toString());
 
-      const usdcBalance = await publicClient.readContract({
-        address: USDC_ADDRESS as `0x${string}`,
-        abi: USDC_ABI,
-        functionName: 'balanceOf',
-        args: [address]
-      }) as bigint;
-      
-      if (usdcBalance < amount) {
-        throw new Error(`Insufficient USDC balance. Have: ${usdcBalance.toString()}, Need: ${amount.toString()}`);
-      }
-
       setState('fetching_agent');
       console.log('Fetching agent address from API...');
       

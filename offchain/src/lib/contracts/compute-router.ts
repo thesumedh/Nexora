@@ -176,7 +176,12 @@ export interface AgentUpdatedEvent {
  * ComputeRouter contract address on ADI Testnet
  * Updated: V2 deployment - parameterless constructor
  */
-export const COMPUTE_ROUTER_ADDRESS = '0xe899A74296e641D674E8BeA07ef79a0772033ebe' as `0x${string}`
+/**
+ * ComputeRouter V3 — deployed with our agent wallet as the authorized agent
+ * Agent: 0xCE5E5d9cF100D9F6519BEA90345D408bB14eB5B5
+ * Deployed: block 164437 on ADI Testnet
+ */
+export const COMPUTE_ROUTER_ADDRESS = '0xaa8988146353a1d1c1e354cb5b9fd94f857f8da9' as `0x${string}`
 
 /**
  * Helper to check if contract address is configured
