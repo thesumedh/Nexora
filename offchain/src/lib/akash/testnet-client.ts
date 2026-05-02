@@ -12,7 +12,7 @@
 
 import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
 import { SigningStargateClient, GasPrice } from '@cosmjs/stargate';
-import { sdlToYAML, type JobRequirements } from './sdl-generator';
+import { sdlToYAML, generateSDL, type JobRequirements } from './sdl-generator';
 
 // ─── Sandbox configuration ───────────────────────────────────────────────────
 
@@ -104,8 +104,9 @@ export async function createSandboxDeployment(
     );
   }
 
-  // Generate SDL
-  const sdlYaml = sdlToYAML(requirements as Parameters<typeof sdlToYAML>[0]);
+  // Generate SDL: JobRequirements → SdlSpec → YAML string
+  const sdlSpec = generateSDL(requirements);
+  const sdlYaml = sdlToYAML(sdlSpec);
   log('Generated SDL YAML');
 
   // Connect signing client
